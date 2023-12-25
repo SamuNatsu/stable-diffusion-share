@@ -76,6 +76,7 @@ export const useMainStore = createGlobalState(() => {
       denoising_strength: denoisingStrength.value
     };
 
+    socket.send('generate', body);
     log('生成请求已发送');
   }
 

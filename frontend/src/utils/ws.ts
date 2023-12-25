@@ -66,10 +66,12 @@ export class WebSocketWrapper extends EventEmitter {
     });
   }
 
-  // Is opened
-  public isOpened(): boolean {
-    return this.socket === null
-      ? false
-      : this.socket.readyState === WebSocket.OPEN;
+  // Send message
+  public send(type: string, data: any): void {
+    if (this.socket === null) {
+      return;
+    }
+
+    this.socket.send(JSON.stringify({ type, data }));
   }
 }
