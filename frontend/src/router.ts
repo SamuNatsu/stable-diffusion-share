@@ -23,3 +23,10 @@ export const router: Router = createRouter({
     }
   ]
 });
+
+router.afterEach((): void => {
+  scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+});

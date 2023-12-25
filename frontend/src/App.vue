@@ -1,16 +1,17 @@
 <script lang="ts" setup>
 import { useMainStore } from '@/utils/store';
+import { onBeforeMount } from 'vue';
 
 // Components
 import StickyHeader from './components/StickyHeader.vue';
-import { onMounted } from 'vue';
+import SiteFooter from './components/SiteFooter.vue';
 
 // Injects
-const { initWS } = useMainStore();
+const { fetchInfo } = useMainStore();
 
 // Lifecycle
-onMounted((): void => {
-  initWS();
+onBeforeMount((): void => {
+  fetchInfo();
 });
 </script>
 
@@ -18,5 +19,6 @@ onMounted((): void => {
   <div class="flex flex-col w-full">
     <StickyHeader/>
     <RouterView/>
+    <SiteFooter/>
   </div>
 </template>

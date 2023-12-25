@@ -8,17 +8,22 @@ import ImageBox from '@/components/ImageBox.vue';
 
 // Injects
 const {
-  prompt,
-  negPrompt,
-  steps,
   maxSteps,
-  cfgScale,
   maxCfgScale,
+  maxHrSteps,
+
+  prompt,
+  usePrependPrompt,
+  negPrompt,
+  usePrependNegPrompt,
+  steps,
+  cfgScale,
   seed,
   ratio,
   enableHr,
+  hrSecondPassSteps,
   denoisingStrength,
-  ready,
+
   status,
   lastImage,
   errorText,
@@ -49,10 +54,54 @@ watch(ratio, (newValue: string): void => {
         <textarea v-model="prompt" placeholder="在此输入你希望在图中出现的元素"></textarea>
       </section>
       <section>
+        <h1>添加预置的正向提示词</h1>
+        <div class="flex gap-8 items-center">
+          <div class="flex gap-2 items-center">
+            <input
+              v-model="usePrependPrompt"
+              id="form-enable-prepend-prompt" 
+              type="radio"
+              :value="true">
+            <label for="form-enable-prepend-prompt">启用</label>
+          </div>
+          <div class="flex gap-2 items-center">
+            <input
+              v-model="usePrependPrompt"
+              id="form-disable-prepend-prompt"
+              type="radio"
+              :value="false">
+            <label for="form-disable-prepend-prompt">禁用</label>
+          </div>
+        </div>
+        <p>在正向提示词前添加共享网络内置的提示词，默认关闭以防止喧宾夺主<br>你可以在系统状态查看这些内置的正向提示词</p>
+      </section>
+      <section>
         <h1>负向提示词</h1>
         <textarea
           v-model="negPrompt"
           placeholder="在此输入你不希望在图中出现的元素"></textarea>
+      </section>
+      <section>
+        <h1>添加预置的负向提示词</h1>
+        <div class="flex gap-8 items-center">
+          <div class="flex gap-2 items-center">
+            <input
+              v-model="usePrependNegPrompt"
+              id="form-enable-prepend-neg-prompt"
+              type="radio"
+              :value="true">
+            <label for="form-enable-prepend-neg-prompt">启用</label>
+          </div>
+          <div class="flex gap-2 items-center">
+            <input
+              v-model="usePrependNegPrompt"
+              id="form-disable-prepend-neg-prompt"
+              type="radio"
+              :value="false">
+            <label for="form-disable-prepend-neg-prompt">禁用</label>
+          </div>
+        </div>
+        <p>在负向提示词前添加共享网络内置的提示词，默认开启来减少负向提示词的输入<br>你可以在系统状态查看这些内置的负向提示词</p>
       </section>
       <section>
         <h1>采样迭代步数</h1>
@@ -80,25 +129,46 @@ watch(ratio, (newValue: string): void => {
         <h1>高分辨率修复</h1>
         <div class="flex gap-8 items-center">
           <div class="flex gap-2 items-center">
-            <input v-model="enableHr" id="form-enable-hr" type="radio" :value="true">
+            <input
+              v-model="enableHr"
+              id="form-enable-hr"
+              type="radio"
+              :value="true">
             <label for="form-enable-hr">启用</label>
           </div>
           <div class="flex gap-2 items-center">
-            <input v-model="enableHr" id="form-disable-hr" type="radio" :value="false">
+            <input
+              v-model="enableHr"
+              id="form-disable-hr"
+              type="radio"
+              :value="false">
             <label for="form-disable-hr">禁用</label>
           </div>
         </div>
         <p>高分辨率修复将放大输出图片，同时增加耗时</p>
       </section>
       <section v-if="enableHr">
+        <h1>重设迭代步数</h1>
+        <RangeInput
+          v-model="hrSecondPassSteps"
+          :min="1"
+          :max="maxHrSteps"
+          :step="1"/>
+        <p>数值越大，放大效果越好，耗时越长</p>
+      </section>
+      <section v-if="enableHr">
         <h1>重绘幅度</h1>
-        <RangeInput v-model="denoisingStrength" :min="0" :max="1" :step="0.01"/>
+        <RangeInput
+          v-model="denoisingStrength"
+          :min="0"
+          :max="1"
+          :step="0.01"/>
         <p>数值越大，放大后的图片与原图片差异越大</p>
       </section>
       <button
         @click="generate"
         class="bg-orange-200 font-bold p-4 rounded-xl transition-colors disabled:bg-neutral-300 disabled:text-neutral-500 hover:bg-orange-400 hover:text-white"
-        :disabled="!ready || status === 'generating'">
+        :disabled="status === 'generating'">
         {{ status === 'generating' ? '正在生成' : '开始生成'}}
       </button>
       <hr v-if="status !== 'idle' || lastImage !== null">
