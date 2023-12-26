@@ -23,6 +23,7 @@ const PORT = parseInt(process.env.PORT ?? '3000');
 const SSL = process.env.SSL === 'true';
 const SSL_CERT = process.env.SSL_CERT;
 const SSL_KEY = process.env.SSL_KEY;
+const QUEUE_LEN = parseInt(process.env.QUEUE_LEN ?? '20');
 
 const SD_API = process.env.SD_API;
 const SD_CKPT_NAME = process.env.SD_CKPT_NAME;
@@ -213,6 +214,13 @@ app
 
     const sid = req.body.sid;
     delete req.body.sid;
+
+    if (queue.length() >= QUEUE_LEN) {
+      sendBySID(sid, 'queue_full', 'queue_full');
+      console.error(`[Core] Queue full: serial=${serial}`);
+      return res.sendStatus(204);
+    }
+
     sendBySID(sid, 'serial', serial);
     queue.push({ sid, args: req.body, serial });
 

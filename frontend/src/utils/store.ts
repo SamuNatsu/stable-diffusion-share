@@ -148,6 +148,11 @@ export const useMainStore = createGlobalState(() => {
           setError('任务请求发送失败，请联系管理员');
         });
     });
+    source.addEventListener('queue_full', (): void => {
+      setError('当前生成队列已满，请等待一会');
+      log('当前生成队列已满，请等待一会');
+      source.close();
+    });
     source.addEventListener('serial', (ev: MessageEvent): void => {
       serial = JSON.parse(ev.data);
       log(`任务提交成功，流水号：${serial}`);
