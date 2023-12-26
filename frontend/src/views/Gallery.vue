@@ -16,7 +16,10 @@ onActivated((): void => {
 </script>
 
 <template>
-  <main class="min-h-[calc(100vh-12.25rem)] mx-auto p-4 select-none w-full md:w-2/3">
+  <main v-if="gallery.length === 0" class="flex h-[calc(100vh-13.75rem)] items-center justify-center">
+    <h1 class="italic text-2xl text-neutral-400">空</h1>
+  </main>
+  <main v-else class="min-h-[calc(100vh-13.75rem)] mx-auto p-4 select-none w-full md:w-2/3">
     <Waterfall :list="(gallery as unknown as ViewCard[])">
       <template #item="{ item }">
         <img

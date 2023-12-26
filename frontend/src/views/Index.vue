@@ -30,7 +30,7 @@ const {
     <h1 class="font-bold mx-auto my-8 text-2xl text-red-500">无法获取系统信息</h1>
     <p class="font-bold mx-auto text-red-500">请联系管理员获取帮助</p>
   </template>
-  <main v-else class="flex flex-col gap-8 min-h-[calc(100vh-12.25rem)] mx-auto p-4 w-full md:w-2/3 sm:flex-row">
+  <main v-else class="flex flex-col gap-8 min-h-[calc(100vh-13.75rem)] mx-auto p-4 w-full md:w-2/3 sm:flex-row">
     <div class="flex flex-col gap-8 w-full sm:w-1/2">
       <section>
         <h1>公告</h1>
