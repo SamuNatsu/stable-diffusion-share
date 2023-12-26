@@ -4,13 +4,13 @@
 
 Frontend written in Vue3 and Vite, you can easily modify
 
-Backend wriiten in CommonJS, also easily modify
+Backend writtten in CommonJS, also easily modify
 
 So there is no need to read this part
 
 ## Deployment
 
-1. Download artifacts on [Github Action](https://github.com/SamuNatsu/stable-diffusion-share/actions), you'd better use most recent one
+1. Download artifacts on [Github Action](https://github.com/SamuNatsu/stable-diffusion-share/actions), you'd better use the most recent one
 
 2. Unzip & untar artifact
 
