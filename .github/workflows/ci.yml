@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout branch
+      uses: actions/checkout@v4
+
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v2
+      with: 
+        version: 8
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'pnpm'
+
+    - name: Install dependencies
+      run: cd frontend && pnpm install --no-frozen-lockfile
+
+    - name: Build distribution
+      run: pnpm run build
+
+    - name: Create package
+      run: cd .. && mkdir package && cp -r frontend/dist package/www && cp backend/server.cjs backend/package.json package/
+
+    - name: Create artifact
+      run: tar --dereference --hard-dereference --directory package/ -zcvf package.tar.gz .
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: package.tar.gz
+        path: package.tar.gz
