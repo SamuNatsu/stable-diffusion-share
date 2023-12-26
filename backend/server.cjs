@@ -65,40 +65,46 @@ const taskScheme = joi.object({
 // Session map
 const sessions = {};
 function genSID() {
-  let sid = nanoid(32);
-  while (sessions[sid] !== undefined) {
-    sid = nanoid(32);
+  while (true) {
+    const sid = nanoid(32);
+    if (sessions[sid] === undefined) {
+      return sid;
+    }
   }
-  return sid;
 }
-function broadcastSession(event, data) {
+function broadcast(event, data) {
   Object.values(sessions).forEach((s) => {
-    s.res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+    s.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
   });
 }
-function sendSession(sid, event, data) {
-  sessions[sid]?.res.write(
-    `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`
-  );
+function sendBySID(sid, event, data) {
+  sessions[sid]?.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
 }
 
 // Task queue
 let serial = 0;
 const queue = async.queue(async (task) => {
-  console.log(
-    `[Core] Generating image: ${task.serial}@${new Date().toISOString()}`
-  );
-  broadcastSession('queue', task.serial);
+  const time = new Date().toISOString();
+  console.log(`[Core] Generating image: serial=${task.serial}, time=${time}`);
+  broadcast('queue', task.serial);
+
+  if (sessions[task.sid] === undefined) {
+    console.log(
+      `[Core] Skip generating (Session not found): serial=${task.serial}, sid=${task.sid}`
+    );
+    return;
+  }
 
   const matches = /^([1-9]\d*):([1-9]\d*)$/.exec(task.args.ratio);
   task.args.ratio = Math.sqrt(parseInt(matches[1]) / parseInt(matches[2]));
-  task.args.height = Math.ceil(SD_BASIC_SIZE * task.data.ratio);
-  task.args.width = Math.ceil(SD_BASIC_SIZE / task.data.height);
+  task.args.width = Math.ceil(SD_BASIC_SIZE * task.args.ratio);
+  task.args.height = Math.ceil(SD_BASIC_SIZE / task.args.ratio);
   delete task.args.ratio;
+
+  task.args.seed = BigInt(task.args.seed);
 
   const payload = {
     ...task.args,
-    seed: BigInt(task.args.seed),
     sampler_name: SD_SAMPLER_NAME,
     hr_scale: SD_HR_SCALE,
     hr_upscaler: SD_HR_UPSCALER,
@@ -110,7 +116,7 @@ const queue = async.queue(async (task) => {
   };
   console.log(payload);
 
-  fetch(SD_API, {
+  await fetch(SD_API, {
     method: 'POST',
     headers: new Headers({ 'Content-Type': 'application/json' }),
     body: JSONbig.stringify(payload)
@@ -119,21 +125,21 @@ const queue = async.queue(async (task) => {
       if (res.ok) {
         return res.json();
       }
-      console.error(`[Core] Fail to generate: ${task.serial}`);
-      console.error(res.statusText);
-      sendSession(task.sid, 'fail', 'generate');
+      console.error(`[Core] Fail to generate: serial=${task.serial}`);
+      console.error(res);
+      sendBySID(task.sid, 'fail', 'fail');
     })
     .then((data) => {
       if (data === undefined) {
         return;
       }
-      console.log(`[Core] Generated: ${task.serial}`);
-      sendSession(task.sid, 'done', data);
+      console.log(`[Core] Generated: serial=${task.serial}`);
+      sendBySID(task.sid, 'done', data);
     })
     .catch((err) => {
-      console.error(`[Core] Fail to send generating query: ${task.serial}`);
+      console.error(`[Core] Fail to query API: serial=${task.serial}`);
       console.error(err);
-      sendSession(task.sid, 'fail', 'fetch');
+      sendBySID(task.sid, 'fail', 'fail');
     });
 });
 
@@ -147,7 +153,7 @@ app
   .use(express.static('./www'))
   .use(express.json())
   .get('/api/info', (req, res) => {
-    console.log(`[Core] Query info from {${req.remote}}`);
+    console.log(`[Core] Query info: remote=${req.remote}`);
     res.send({
       notification: NOTIFICATION,
       provider: {
@@ -174,33 +180,44 @@ app
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
-    console.log(`[SSE] Connection opened from {${req.remote}}`);
+    console.log(`[SSE] Connection opened: remote={${req.remote}}`);
 
     const sid = genSID();
-    sessions[sid] = { req, res };
-    sendSession(sid, 'session', sid);
-    console.log(`[SSE] Session started from {${req.remote}}: ${sid}`);
+    sessions[sid] = res;
+    sendBySID(sid, 'session', sid);
+    console.log(`[SSE] Session started: remote={${req.remote}}, sid=${sid}`);
 
     res.on('close', () => {
-      console.log(`[SSE] Connection closed from {${req.remote}}: ${sid}`);
+      console.log(
+        `[SSE] Connection closed: remote={${req.remote}}, sid=${sid}`
+      );
       delete sessions[sid];
     });
   })
   .post('/api/generate', (req, res) => {
     const { error } = taskScheme.validate(req.body);
     if (error !== undefined) {
+      console.error(`[SSE] Invalid request: remote=${req.remote}`);
+      console.error(error);
       return res.sendStatus(400);
     }
     if (sessions[req.body.sid] === undefined) {
+      console.error(`[SSE] Invalid session: remote=${req.remote}`);
+      console.error(req.body);
       return res.sendStatus(401);
     }
 
-    console.log(`[SSE] New task received: ${serial}`);
+    console.log(
+      `[SSE] New task received: remote=${req.remote}, serial=${serial}`
+    );
+
     const sid = req.body.sid;
     delete req.body.sid;
+    sendBySID(sid, 'serial', serial);
     queue.push({ sid, args: req.body, serial });
-    res.send({ serial });
+
     serial++;
+    res.sendStatus(204);
   });
 
 // Create HTTP(S) server
