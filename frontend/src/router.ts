@@ -9,17 +9,34 @@ export const router: Router = createRouter({
     {
       name: 'index',
       path: '/',
-      component: (): Promise<Component> => import('@/views/Index.vue')
+      component: (): Promise<Component> => import('@/views/Index.vue'),
+      meta: {
+        keepAlive: false
+      }
     },
     {
       name: 'generate',
       path: '/generate',
-      component: (): Promise<Component> => import('@/views/Generate.vue')
+      component: (): Promise<Component> => import('@/views/Generate.vue'),
+      meta: {
+        keepAlive: false
+      }
     },
     {
       name: 'gallery',
       path: '/gallery',
-      component: (): Promise<Component> => import('@/views/Index.vue')
+      component: (): Promise<Component> => import('@/views/Gallery.vue'),
+      meta: {
+        keepAlive: true
+      }
+    },
+    {
+      name: '404',
+      path: '/:pathMatch(.*)',
+      component: (): Promise<Component> => import('@/views/404.vue'),
+      meta: {
+        keepAlive: false
+      }
     }
   ]
 });

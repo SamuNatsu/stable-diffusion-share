@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useMainStore } from '@/utils/store';
-import { watch } from 'vue';
+import { ComputedRef, computed, watch } from 'vue';
 
 // Components
 import RangeInput from '@/components/RangeInput.vue';
@@ -10,7 +10,9 @@ import ImageBox from '@/components/ImageBox.vue';
 const {
   maxSteps,
   maxCfgScale,
+  basicSize,
   maxHrSteps,
+  hrScale,
 
   prompt,
   usePrependPrompt,
@@ -24,12 +26,32 @@ const {
   hrSecondPassSteps,
   denoisingStrength,
 
-  status,
+  genStatus,
   lastImage,
   errorText,
   logText,
   generate
 } = useMainStore();
+
+// Computed
+const finalWidth: ComputedRef<number> = computed((): number => {
+  const result: RegExpExecArray = /^([1-9]\d*):([1-9]\d*)$/.exec(
+    ratio.value
+  ) as RegExpExecArray;
+  const numRatio: number = Math.sqrt(parseInt(result[1]) / parseInt(result[2]));
+  return (
+    (enableHr.value ? hrScale.value : 1) * Math.ceil(basicSize.value * numRatio)
+  );
+});
+const finalHeight: ComputedRef<number> = computed((): number => {
+  const result: RegExpExecArray = /^([1-9]\d*):([1-9]\d*)$/.exec(
+    ratio.value
+  ) as RegExpExecArray;
+  const numRatio: number = Math.sqrt(parseInt(result[1]) / parseInt(result[2]));
+  return (
+    (enableHr.value ? hrScale.value : 1) * Math.ceil(basicSize.value / numRatio)
+  );
+});
 
 // Watch
 watch(seed, (newValue: string): void => {
@@ -44,11 +66,12 @@ watch(ratio, (newValue: string): void => {
     ratio.value = '1:1';
   }
 });
+
 </script>
 
 <template>
-  <main class="flex gap-8 mx-auto p-4 w-full md:w-2/3">
-    <div class="flex flex-col gap-8 w-1/2">
+  <main class="flex flex-col gap-8 min-h-[calc(100vh-12.25rem)] mx-auto p-4 w-full md:w-2/3 sm:flex-row">
+    <div class="flex flex-col gap-8 w-full sm:w-1/2">
       <section>
         <h1>正向提示词</h1>
         <textarea v-model="prompt" placeholder="在此输入你希望在图中出现的元素"></textarea>
@@ -124,7 +147,7 @@ watch(ratio, (newValue: string): void => {
         <p>两个正整数使用英语分号隔开，表示输出图片宽度与高度的比值</p>
       </section>
     </div>
-    <div class="flex flex-col gap-8 w-1/2">
+    <div class="flex flex-col gap-8 w-full sm:w-1/2">
       <section>
         <h1>高分辨率修复</h1>
         <div class="flex gap-8 items-center">
@@ -165,25 +188,28 @@ watch(ratio, (newValue: string): void => {
           :step="0.01"/>
         <p>数值越大，放大后的图片与原图片差异越大</p>
       </section>
+      <section>
+        <p>最终输出图像尺寸：{{ finalWidth }}x{{ finalHeight }}</p>
+      </section>
       <button
         @click="generate"
         class="bg-orange-200 font-bold p-4 rounded-xl transition-colors disabled:bg-neutral-300 disabled:text-neutral-500 hover:bg-orange-400 hover:text-white"
-        :disabled="status === 'generating'">
-        {{ status === 'generating' ? '正在生成' : '开始生成'}}
+        :disabled="genStatus === 'generating'">
+        {{ genStatus === 'generating' ? '正在生成' : '开始生成'}}
       </button>
-      <hr v-if="status !== 'idle' || lastImage !== null">
+      <hr v-if="genStatus !== 'idle' || lastImage !== null">
       <div
-        v-if="status === 'generating'"
+        v-if="genStatus === 'generating'"
         class="animate-spin border-4 border-b-transparent border-blue-400 h-12 mx-auto rounded-full w-12">
       </div>
       <p
-        v-else-if="status === 'error'"
+        v-else-if="genStatus === 'error'"
         class="font-bold text-red-500">
         {{ errorText }}
       </p>
-      <ImageBox v-else-if="lastImage !== null" :image="lastImage"/>
+      <ImageBox v-else-if="lastImage !== null" class="mx-auto" :image="lastImage"/>
       <hr>
-      <pre class="font-sans text-neutral-400 text-sm">{{ logText }}</pre>
+      <pre class="font-sans text-neutral-400 text-sm text-wrap">{{ logText }}</pre>
     </div>
   </main>
 </template>

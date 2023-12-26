@@ -5,6 +5,7 @@ import { createApp } from 'vue';
 import { router } from './router';
 
 // Global stylesheets
+import 'vue-waterfall-plugin-next/dist/style.css';
 import './style.css';
 
 // Root component

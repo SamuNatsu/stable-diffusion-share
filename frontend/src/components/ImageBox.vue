@@ -21,9 +21,9 @@ const showDetail: Ref<boolean> = ref(false);
       <div
         v-if="showDetail"
         @click.self="showDetail = false"
-        class="backdrop-brightness-[20%] fixed flex gap-8 items-center justify-center inset-0 z-30">
+        class="backdrop-brightness-[20%] fixed flex gap-8 inset-0 items-center justify-center">
         <img
-          class="max-h-[90vh] max-w-[90vw]"
+          class="max-h-[90vh] max-w-[90vw] select-none"
           :src="'data:image/png;base64,' + image.data">
         <div
           class="bg-black border border-neutral-500 p-4 rounded-lg shadow shadow-neutral-500 text-white">

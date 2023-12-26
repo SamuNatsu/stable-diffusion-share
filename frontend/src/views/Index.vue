@@ -30,8 +30,8 @@ const {
     <h1 class="font-bold mx-auto my-8 text-2xl text-red-500">无法获取系统信息</h1>
     <p class="font-bold mx-auto text-red-500">请联系管理员获取帮助</p>
   </template>
-  <main v-else class="flex gap-8 mx-auto p-4 w-full md:w-2/3">
-    <div class="flex flex-col gap-8 w-1/2">
+  <main v-else class="flex flex-col gap-8 min-h-[calc(100vh-12.25rem)] mx-auto p-4 w-full md:w-2/3 sm:flex-row">
+    <div class="flex flex-col gap-8 w-full sm:w-1/2">
       <section>
         <h1>公告</h1>
         <p v-if="notification.length > 0">{{ notification }}</p>
@@ -51,14 +51,12 @@ const {
       </section>
       <section v-if="ckptUrl">
         <h1>模型 URL</h1>
-        <p>
-          <a
-            class="hover:text-red-500"
-            :href="ckptUrl"
-            target="_blank">
-            {{ ckptUrl }}
-          </a>
-        </p>
+        <a
+          class="break-words hover:text-red-500"
+          :href="ckptUrl"
+          target="_blank">
+          {{ ckptUrl }}
+        </a>
       </section>
       <section>
         <h1>最大采样迭代步数</h1>
@@ -69,7 +67,7 @@ const {
         <p>{{ maxCfgScale }}</p>
       </section>
     </div>
-    <div class="flex flex-col gap-8 w-1/2">
+    <div class="flex flex-col gap-8 w-full sm:w-1/2">
       <section>
         <h1>预置正向提示词</h1>
         <p v-if="prependPrompt.length > 0">{{ prependPrompt }}</p>
