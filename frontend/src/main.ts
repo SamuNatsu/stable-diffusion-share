@@ -2,7 +2,7 @@
 import { createApp } from 'vue';
 
 // Plugins
-import { router } from './router';
+import { router } from '@/router';
 
 // Global stylesheets
 import 'vue-waterfall-plugin-next/dist/style.css';

@@ -1,37 +1,48 @@
 <script lang="ts" setup>
-import { useMainStore } from '@/utils/store';
+import { useSystemStore } from '@/stores/system';
 
 // Injects
 const {
-  infoReadyStatus,
-  notification,
+  readyStatus,
+
+
   providerName,
   providerContact,
-  ckptName,
-  ckptUrl,
+  notification,
+  maxQueueLen,
+
+  modelName,
+  modelUrl,
   prependPrompt,
   prependNegativePrompt,
+  sampler,
   maxSteps,
   maxCfgScale,
   basicSize,
-  samplerName,
-  maxHrSteps,
+  allowHr,
+  hrMaxSteps,
   hrUpscaler,
-  hrScale
-} = useMainStore();
+  hrMaxScale
+} = useSystemStore();
 </script>
 
 <template>
-  <div
-    v-if="infoReadyStatus === 'fetching'"
-    class="animate-spin border-4 border-b-transparent border-blue-400 h-12 mx-auto my-8 rounded-full w-12">
-  </div>
-  <template v-else-if="infoReadyStatus === 'fail'">
-    <h1 class="font-bold mx-auto my-8 text-2xl text-red-500">无法获取系统信息</h1>
-    <p class="font-bold mx-auto text-red-500">请联系管理员获取帮助</p>
-  </template>
-  <main v-else class="flex flex-col gap-8 min-h-[calc(100vh-13.75rem)] mx-auto p-4 w-full md:w-2/3 sm:flex-row">
+  <main v-if="readyStatus === 'fetch'" class="single-frame">
+    <div
+      class="animate-spin border-4 border-b-transparent border-blue-400 h-12 rounded-full w-12">
+    </div>
+  </main>
+  <main
+    v-else-if="readyStatus === 'fail'"
+    class="single-frame text-red-500">
+    <h1 class="font-bold text-2xl">无法获取系统信息</h1>
+    <p>请联系管理员获取帮助</p>
+  </main>
+  <main v-else class="flex flex-col gap-8 min-h-[calc(100vh-16.75rem+2px)] mx-auto my-12 p-4 w-full md:w-2/3 sm:flex-row">
     <div class="flex flex-col gap-8 w-full sm:w-1/2">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 1 1 0-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 0 1-1.44-4.282m3.102.069a18.03 18.03 0 0 1-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 0 1 8.835 2.535M10.34 6.66a23.847 23.847 0 0 0 8.835-2.535m0 0A23.74 23.74 0 0 0 18.795 3m.38 1.125a23.91 23.91 0 0 1 1.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 0 0 1.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 0 1 0 3.46" />
+</svg>
       <section>
         <h1>公告</h1>
         <p v-if="notification.length > 0">{{ notification }}</p>
@@ -47,15 +58,15 @@ const {
       </section>
       <section>
         <h1>Diffusion 模型</h1>
-        <p>{{ ckptName }}</p>
+        <p>{{ modelName }}</p>
       </section>
-      <section v-if="ckptUrl">
+      <section v-if="modelUrl">
         <h1>模型 URL</h1>
         <a
           class="break-words hover:text-red-500"
-          :href="ckptUrl"
+          :href="modelUrl"
           target="_blank">
-          {{ ckptUrl }}
+          {{ modelUrl }}
         </a>
       </section>
       <section>
@@ -84,11 +95,11 @@ const {
       </section>
       <section>
         <h1>采样器</h1>
-        <p>{{ samplerName }}</p>
+        <p>{{ sampler }}</p>
       </section>
       <section>
         <h1>最大重设迭代步数</h1>
-        <p>{{ maxHrSteps }}</p>
+        <p>{{ hrMaxSteps }}</p>
       </section>
       <section>
         <h1>放大算法</h1>
@@ -96,7 +107,7 @@ const {
       </section>
       <section>
         <h1>放大倍数</h1>
-        <p>{{ hrScale }}</p>
+        <p>{{ hrMaxScale }}</p>
       </section>
     </div>
   </main>
@@ -109,5 +120,9 @@ section {
 
 section > h1 {
   @apply font-bold text-xl
+}
+
+.single-frame {
+  @apply flex flex-col gap-4 items-center justify-center min-h-[calc(100vh-10.75rem+2px)] w-full
 }
 </style>

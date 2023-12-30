@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { useMainStore } from '@/utils/store';
+import { useSystemStore } from '@/stores/system';
 import { onBeforeMount } from 'vue';
 
 // Components
@@ -8,7 +8,7 @@ import SiteFooter from './components/SiteFooter.vue';
 import ImageModal from './components/ImageModal.vue';
 
 // Injects
-const { fetchInfo } = useMainStore();
+const { fetchInfo } = useSystemStore();
 
 // Lifecycle
 onBeforeMount((): void => {

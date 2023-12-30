@@ -58,9 +58,9 @@ export const useMainStore = createGlobalState(() => {
         if (data === undefined) {
           return;
         }
-        notification.value = data.notification;
-        providerName.value = data.provider.name;
-        providerContact.value = data.provider.contact;
+        notification.value = data.sys.NOTIFICATION;
+        providerName.value = data.sys.PROVIDER_NAME;
+        providerContact.value = data.sys.PROVIDER_CONTACT;
         ckptName.value = data.sd.ckpt_name;
         ckptUrl.value = data.sd.ckpt_url;
         prependPrompt.value = data.sd.prepend_prompt;

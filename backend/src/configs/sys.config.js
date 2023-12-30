@@ -36,7 +36,7 @@ export const PROVIDER_CONTACT = value;
   .string()
   .label('SYS_NOTIFICATION')
   .allow('')
-  .default('')
+  .default(null)
   .validate(process.env.SYS_NOTIFICATION));
 if (error !== undefined) {
   loggers.config.fatal('Fail to parse SYS_NOTIFICATION', error);
