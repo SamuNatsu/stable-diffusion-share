@@ -8,4 +8,5 @@ node_modules
 www
 
 # Build
-app.min.cjs
+app.min.*
+

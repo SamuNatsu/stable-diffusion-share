@@ -6,6 +6,7 @@ import { onBeforeMount } from 'vue';
 import StickyHeader from './components/StickyHeader.vue';
 import SiteFooter from './components/SiteFooter.vue';
 import ImageModal from './components/ImageModal.vue';
+import ShareBone from './components/ShareBone.vue';
 
 // Injects
 const { fetchInfo } = useSystemStore();
@@ -33,5 +34,6 @@ onBeforeMount((): void => {
     </RouterView>
     <ImageModal/>
     <SiteFooter/>
+    <ShareBone/>
   </div>
 </template>

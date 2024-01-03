@@ -64,7 +64,7 @@ export function send(sid, event, data) {
 export function broadcast(event, data) {
   data = JSON.stringify(data);
   Object.values(sessions).forEach((s) => {
-    s.write(`event:${event}\ndata: ${JSON.stringify(data)}\n\n`);
+    s.write(`event:${event}\ndata: ${data}\n\n`);
   });
   loggers.sse.trace(`Data broadcast: size=${data.length}`);
 }

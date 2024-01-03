@@ -6,8 +6,8 @@ import pluginTerser from '@rollup/plugin-terser';
 export default defineConfig({
   input: 'src/app.js',
   output: {
-    file: 'app.min.cjs',
-    format: 'cjs'
+    file: 'app.min.mjs',
+    format: 'esm'
   },
   plugins: [pluginTerser()]
 });

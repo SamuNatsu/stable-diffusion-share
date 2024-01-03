@@ -1,6 +1,7 @@
 /// Generate service module
 import async from 'async';
 import jb from 'json-bigint';
+import moment from 'moment';
 
 import { broadcast, hasSession, send } from './sse.service.js';
 import { loggers } from '../utils/global.util.js';
@@ -13,7 +14,7 @@ const JSONbig = jb({ useNativeBigInt: true });
 let serial = 0;
 
 // Current serial
-let curSerial = 0;
+let curSerial = -1;
 
 // Task queue
 const queue = async.queue(async (task) => {
@@ -54,7 +55,7 @@ const queue = async.queue(async (task) => {
     save_images: true
   };
   loggers.generate.info(
-    `Generating image: serial=${task.serial}, time=${time}`,
+    `Generating image: serial=${task.serial}, time={${time}}`,
     payload
   );
 
@@ -88,6 +89,10 @@ const queue = async.queue(async (task) => {
       send(task.sid, 'fail', 'api');
     });
 });
+queue.error((err, task) => {
+  loggers.generate.warn(`Unexpected generate error: serial=${task.serial}`, err);
+  send(task.sid, 'fail', 'api');
+});
 
 // New task
 export function newTask(res, task) {
@@ -101,14 +106,14 @@ export function newTask(res, task) {
 
   // Check queue capacity
   if (queue.length() >= sys.MAX_QUEUE_LEN) {
-    send(sid, 'fail', 'queue_full');
+    send(sid, 'fail', 'queue');
     loggers.generate.warn(`Queue is full: sid=${sid}`);
     return res.sendStatus(204);
   }
 
   // Push new task
   send(sid, 'serial', serial);
-  if (serial !== curSerial) {
+  if (serial !== curSerial + 1) {
     send(sid, 'queue', curSerial);
   }
   queue.push({ sid, serial, args: task });

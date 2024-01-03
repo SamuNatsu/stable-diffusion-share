@@ -3,7 +3,7 @@ import { version } from '@/../package.json';
 </script>
 
 <template>
-  <footer class="bg-orange-300 p-4 text-white">
+  <footer class="bg-orange-300 p-4 text-white transition-colors dark:bg-black">
     <p class="font-bold text-center">
       <a
         href="https://github.com/SamuNatsu/stable-diffusion-share"

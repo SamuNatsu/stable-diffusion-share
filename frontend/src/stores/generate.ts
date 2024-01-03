@@ -1,38 +1,35 @@
-/// Store module
+/// Generate store
 import { createGlobalState } from '@vueuse/core';
-import { Ref, ref } from 'vue';
+import { ComputedRef, Ref, computed, ref, watch } from 'vue';
+import { useSystemStore } from './system';
 import { Image, db } from '@/utils/db';
 import moment from 'moment';
 
 // Export store
-export const useMainStore = createGlobalState(() => {
-  // States
-  const infoReadyStatus: Ref<'fetching' | 'ok' | 'fail'> = ref('fetching');
-  const notification: Ref<string> = ref('');
-  const providerName: Ref<string> = ref('');
-  const providerContact: Ref<string | null> = ref(null);
-  const ckptName: Ref<string> = ref('');
-  const ckptUrl: Ref<string | null> = ref(null);
-  const prependPrompt: Ref<string> = ref('');
-  const prependNegativePrompt: Ref<string> = ref('');
-  const maxSteps: Ref<number> = ref(50);
-  const maxCfgScale: Ref<number> = ref(20);
-  const basicSize: Ref<number> = ref(512);
-  const samplerName: Ref<string> = ref('');
-  const maxHrSteps: Ref<number> = ref(50);
-  const hrUpscaler: Ref<string> = ref('');
-  const hrScale: Ref<number> = ref(1);
+export const useGenerateStore = createGlobalState(() => {
+  // Injects
+  const {
+    modelName,
+    modelUrl,
+    prependPrompt,
+    prependNegativePrompt,
+    sampler,
+    basicSize,
+    allowHr
+  } = useSystemStore();
 
+  // States
   const prompt: Ref<string> = ref('');
   const usePrependPrompt: Ref<boolean> = ref(false);
-  const negPrompt: Ref<string> = ref('');
-  const usePrependNegPrompt: Ref<boolean> = ref(true);
+  const negativePrompt: Ref<string> = ref('');
+  const usePrependNegativePrompt: Ref<boolean> = ref(true);
   const steps: Ref<number> = ref(25);
   const cfgScale: Ref<number> = ref(7);
   const seed: Ref<string> = ref('-1');
   const ratio: Ref<string> = ref('1:1');
   const enableHr: Ref<boolean> = ref(false);
   const hrSecondPassSteps: Ref<number> = ref(20);
+  const hrScale: Ref<number> = ref(2);
   const denoisingStrength: Ref<number> = ref(0.5);
 
   const genStatus: Ref<'idle' | 'generating' | 'error'> = ref('idle');
@@ -40,51 +37,49 @@ export const useMainStore = createGlobalState(() => {
   const errorText: Ref<string> = ref('');
   const logText: Ref<string> = ref('');
 
-  const gallery: Ref<Image[]> = ref([]);
-  const modalImage: Ref<Image | null> = ref(null);
+  // Watches
+  watch(seed, (newValue: string): void => {
+    newValue = newValue.replace(/\s/g, '');
+    if (!/^(-1|0|[1-9]\d*)$/.test(newValue)) {
+      seed.value = '-1';
+    }
+  });
+  watch(ratio, (newValue: string): void => {
+    newValue = newValue.replace(/\s/g, '');
+    if (!/^[1-9]\d*:[1-9]\d*$/.test(newValue)) {
+      ratio.value = '1:1';
+    }
+  });
+
+  // Getters
+  const finalWidth: ComputedRef<number> = computed((): number => {
+    const result: RegExpExecArray = /^([1-9]\d*):([1-9]\d*)$/.exec(
+      ratio.value
+    ) as RegExpExecArray;
+    const numRatio: number = Math.sqrt(
+      parseInt(result[1]) / parseInt(result[2])
+    );
+    return Math.ceil(
+      (enableHr.value && allowHr.value ? hrScale.value : 1) *
+        basicSize.value *
+        numRatio
+    );
+  });
+  const finalHeight: ComputedRef<number> = computed((): number => {
+    const result: RegExpExecArray = /^([1-9]\d*):([1-9]\d*)$/.exec(
+      ratio.value
+    ) as RegExpExecArray;
+    const numRatio: number = Math.sqrt(
+      parseInt(result[1]) / parseInt(result[2])
+    );
+    return Math.ceil(
+      ((enableHr.value && allowHr.value ? hrScale.value : 1) *
+        basicSize.value) /
+        numRatio
+    );
+  });
 
   // Actions
-  function fetchInfo(): void {
-    fetch('/api/info')
-      .then((res: Response): Promise<any> | undefined => {
-        if (res.ok) {
-          return res.json();
-        }
-        console.error('[Core] Fail to fetch info');
-        console.error(res);
-        infoReadyStatus.value = 'fail';
-      })
-      .then((data: any): void => {
-        if (data === undefined) {
-          return;
-        }
-        notification.value = data.sys.NOTIFICATION;
-        providerName.value = data.sys.PROVIDER_NAME;
-        providerContact.value = data.sys.PROVIDER_CONTACT;
-        ckptName.value = data.sd.ckpt_name;
-        ckptUrl.value = data.sd.ckpt_url;
-        prependPrompt.value = data.sd.prepend_prompt;
-        prependNegativePrompt.value = data.sd.prepend_negative_prompt;
-        maxSteps.value = data.sd.max_steps;
-        maxCfgScale.value = data.sd.max_cfg_scale;
-        basicSize.value = data.sd.basic_size;
-        samplerName.value = data.sd.sampler_name;
-        maxHrSteps.value = data.sd.max_hr_steps;
-        hrUpscaler.value = data.sd.hr_upscaler;
-        hrScale.value = data.sd.hr_scale;
-        steps.value = Math.min(steps.value, maxSteps.value);
-        cfgScale.value = Math.min(cfgScale.value, maxCfgScale.value);
-        hrSecondPassSteps.value = Math.min(
-          hrSecondPassSteps.value,
-          maxHrSteps.value
-        );
-        infoReadyStatus.value = 'ok';
-      })
-      .catch((): void => {
-        console.error('[Core] Fail to fetch info');
-        infoReadyStatus.value = 'fail';
-      });
-  }
   function setError(msg: string): void {
     genStatus.value = 'error';
     errorText.value = msg;
@@ -104,13 +99,15 @@ export const useMainStore = createGlobalState(() => {
         (usePrependPrompt.value ? prependPrompt.value + ',' : '') +
         prompt.value,
       negative_prompt:
-        (usePrependNegPrompt.value ? prependNegativePrompt.value + ',' : '') +
-        negPrompt.value,
+        (usePrependNegativePrompt.value
+          ? prependNegativePrompt.value + ','
+          : '') + negativePrompt.value,
       steps: steps.value,
       cfg_scale: cfgScale.value,
       seed: seed.value,
       ratio: ratio.value,
       enable_hr: enableHr.value,
+      hr_scale: hrScale.value,
       hr_second_pass_steps: hrSecondPassSteps.value,
       denoising_strength: denoisingStrength.value
     };
@@ -148,11 +145,6 @@ export const useMainStore = createGlobalState(() => {
           setError('任务请求发送失败，请联系管理员');
         });
     });
-    source.addEventListener('queue_full', (): void => {
-      setError('当前生成队列已满，请等待一会');
-      log('当前生成队列已满，请等待一会');
-      source.close();
-    });
     source.addEventListener('serial', (ev: MessageEvent): void => {
       serial = JSON.parse(ev.data);
       log(`任务提交成功，流水号：${serial}`);
@@ -165,9 +157,22 @@ export const useMainStore = createGlobalState(() => {
         log(`正在排队，目前排位：${serial - queue}`);
       }
     });
-    source.addEventListener('fail', (): void => {
-      setError('生成失败，请联系管理员');
-      log('生成失败，请联系管理员');
+    source.addEventListener('fail', (ev: MessageEvent): void => {
+      const msg: string = JSON.parse(ev.data);
+      switch (msg) {
+        case 'generate':
+          setError('生成出错，请联系管理员');
+          log('生成出错');
+          break;
+        case 'api':
+          setError('Stable Diffusion 访问异常，请联系管理员');
+          log('Stable Diffusion 访问异常');
+          break;
+        case 'queue':
+          setError('生成队列已满，请稍等片刻');
+          log('生成队列已满');
+          break;
+      }
       source.close();
     });
     source.addEventListener('done', async (ev: MessageEvent): Promise<void> => {
@@ -178,10 +183,10 @@ export const useMainStore = createGlobalState(() => {
       const image: Image = {
         ...task,
         seed: JSON.parse(data.info).seed,
-        ckpt_name: ckptName.value,
-        ckpt_url: ckptUrl.value,
+        ckpt_name: modelName.value,
+        ckpt_url: modelUrl.value,
         basic_size: basicSize.value,
-        sampler: samplerName.value,
+        sampler: sampler.value,
         scale: hrScale.value,
         data: data.images[0]
       } as Image;
@@ -197,40 +202,20 @@ export const useMainStore = createGlobalState(() => {
       }
     });
   }
-  function updateGallery(): Promise<void> {
-    return db.images.toArray().then((value: Image[]): void => {
-      gallery.value = value.reverse();
-    });
-  }
 
-  // Return
+  // Return store
   return {
-    infoReadyStatus,
-    notification,
-    providerName,
-    providerContact,
-    ckptName,
-    ckptUrl,
-    prependPrompt,
-    prependNegativePrompt,
-    maxSteps,
-    maxCfgScale,
-    basicSize,
-    samplerName,
-    maxHrSteps,
-    hrUpscaler,
-    hrScale,
-
     prompt,
     usePrependPrompt,
-    negPrompt,
-    usePrependNegPrompt,
+    negativePrompt,
+    usePrependNegativePrompt,
     steps,
     cfgScale,
     seed,
     ratio,
     enableHr,
     hrSecondPassSteps,
+    hrScale,
     denoisingStrength,
 
     genStatus,
@@ -238,14 +223,9 @@ export const useMainStore = createGlobalState(() => {
     errorText,
     logText,
 
-    gallery,
-    modalImage,
+    finalWidth,
+    finalHeight,
 
-    fetchInfo,
-    setError,
-    logClear,
-    log,
-    generate,
-    updateGallery
+    generate
   };
 });

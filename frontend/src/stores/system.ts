@@ -1,4 +1,4 @@
-/// System module
+/// System store
 import { createGlobalState } from '@vueuse/core';
 import { Ref, ref } from 'vue';
 

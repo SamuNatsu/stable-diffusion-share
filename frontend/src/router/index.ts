@@ -1,6 +1,11 @@
 /// Router module
-import { Component } from 'vue';
 import { Router, createRouter, createWebHashHistory } from 'vue-router';
+
+// Components
+import Index from '@/views/Index.vue';
+import Generate from '@/views/Generate.vue';
+import Gallery from '@/views/Gallery.vue';
+import NotFound from '@/views/404.vue';
 
 // Export router
 export const router: Router = createRouter({
@@ -9,7 +14,7 @@ export const router: Router = createRouter({
     {
       name: 'index',
       path: '/',
-      component: (): Promise<Component> => import('@/views/Index.vue'),
+      component: Index,
       meta: {
         keepAlive: false
       }
@@ -17,7 +22,7 @@ export const router: Router = createRouter({
     {
       name: 'generate',
       path: '/generate',
-      component: (): Promise<Component> => import('@/views/Generate.vue'),
+      component: Generate,
       meta: {
         keepAlive: false
       }
@@ -25,7 +30,7 @@ export const router: Router = createRouter({
     {
       name: 'gallery',
       path: '/gallery',
-      component: (): Promise<Component> => import('@/views/Gallery.vue'),
+      component: Gallery,
       meta: {
         keepAlive: true
       }
@@ -33,7 +38,7 @@ export const router: Router = createRouter({
     {
       name: '404',
       path: '/:pathMatch(.*)',
-      component: (): Promise<Component> => import('@/views/404.vue'),
+      component: NotFound,
       meta: {
         keepAlive: false
       }
