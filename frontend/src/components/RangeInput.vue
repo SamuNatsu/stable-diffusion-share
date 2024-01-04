@@ -9,7 +9,7 @@ defineProps<{
 
 // Emits
 defineEmits<{
-  (e: 'update:modelValue', newValue: number): void
+  (e: 'update:modelValue', newValue: number): void;
 }>();
 </script>
 
@@ -25,7 +25,6 @@ defineEmits<{
       :value="modelValue">
     <input
       @input="$emit('update:modelValue', parseFloat(($event.target as HTMLInputElement).value))"
-      class="border-2 border-orange-200 outline-none p-1 transition-colors w-1/6 dark:bg-neutral-800 dark:border-neutral-700 dark:text-white dark:focus:border-white focus:border-orange-300"
       :max="max"
       :min="min"
       :step="step ?? 'any'"
@@ -41,6 +40,17 @@ input::-webkit-outer-spin-button {
 }
 
 input[type="number"] {
-  @apply appearance-none
+  @apply
+    appearance-none
+    bg-transparent
+    border-2 border-orange-200
+    outline-none
+    p-1
+    transition-colors
+    w-1/6
+    dark:border-neutral-700
+    dark:text-white
+    dark:focus:border-white
+    focus:border-orange-300
 }
 </style>

@@ -2,9 +2,13 @@
 import { Image, db } from '@/utils/db';
 import { createGlobalState } from '@vueuse/core';
 import { Ref, ref } from 'vue';
+import { useGenerateStore } from './generate';
 
 // Export store
 export const useModalStore = createGlobalState(() => {
+  // Injects
+  const { lastImage, setError, log } = useGenerateStore();
+
   // States
   const gallery: Ref<Image[]> = ref([]);
   const modalImage: Ref<Image | null> = ref(null);
@@ -16,13 +20,20 @@ export const useModalStore = createGlobalState(() => {
       gallery.value = value.reverse();
     });
   }
-  function deleteImg(): void {
+  function deleteImg(img?: Image, close?: () => void): void {
     if (!confirm('确认删除？操作无法恢复！')) {
       return;
     }
-    const id: number = modalImage.value?.id as number;
+    const id: number = img?.id || (modalImage.value?.id as number);
     db.images.delete(id).then((): void => {
-      updateGallery().then(close);
+      updateGallery().then((): void => {
+        if (lastImage.value === modalImage.value) {
+          setError('图片已删除');
+          log('用户手动删除了图片');
+        }
+        modalImage.value = null;
+        close?.();
+      });
     });
   }
   function downloadImg(): void {

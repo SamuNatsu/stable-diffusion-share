@@ -32,7 +32,8 @@ class ImageDexie extends Dexie {
     super('images');
 
     this.version(1).stores({
-      images: '++id, ckpt_name, ckpt_url, basic_size, sampler, upscaler, scale, data, prompt, negative_prompt, steps, cfg_scale, seed, ratio, enable_hr, hr_second_pass_steps, denoising_strendth'
+      images:
+        '++id, ckpt_name, ckpt_url, basic_size, sampler, upscaler, scale, data, prompt, negative_prompt, steps, cfg_scale, seed, ratio, enable_hr, hr_second_pass_steps, denoising_strendth'
     });
   }
 }

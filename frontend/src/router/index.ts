@@ -15,33 +15,25 @@ export const router: Router = createRouter({
       name: 'index',
       path: '/',
       component: Index,
-      meta: {
-        keepAlive: false
-      }
+      meta: { keepAlive: false }
     },
     {
       name: 'generate',
       path: '/generate',
       component: Generate,
-      meta: {
-        keepAlive: false
-      }
+      meta: { keepAlive: false }
     },
     {
       name: 'gallery',
       path: '/gallery',
       component: Gallery,
-      meta: {
-        keepAlive: true
-      }
+      meta: { keepAlive: true }
     },
     {
       name: '404',
       path: '/:pathMatch(.*)',
       component: NotFound,
-      meta: {
-        keepAlive: false
-      }
+      meta: { keepAlive: false }
     }
   ]
 });

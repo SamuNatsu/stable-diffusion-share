@@ -3,8 +3,8 @@ import { version } from '@/../package.json';
 </script>
 
 <template>
-  <footer class="bg-orange-300 p-4 text-white transition-colors dark:bg-black">
-    <p class="font-bold text-center">
+  <footer>
+    <p class="font-bold">
       <a
         href="https://github.com/SamuNatsu/stable-diffusion-share"
         target="_blank">
@@ -17,6 +17,21 @@ import { version } from '@/../package.json';
         SNRainiar
       </a>
     </p>
-    <p class="text-center">v{{ version }}</p>
+    <p>v{{ version }}</p>
   </footer>
 </template>
+
+<style scoped>
+footer {
+  @apply
+    bg-orange-300
+    p-4
+    text-white
+    transition-colors
+    dark:bg-black
+}
+
+p {
+  @apply text-center
+}
+</style>

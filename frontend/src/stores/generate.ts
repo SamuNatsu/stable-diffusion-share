@@ -226,6 +226,8 @@ export const useGenerateStore = createGlobalState(() => {
     finalWidth,
     finalHeight,
 
+    setError,
+    log,
     generate
   };
 });

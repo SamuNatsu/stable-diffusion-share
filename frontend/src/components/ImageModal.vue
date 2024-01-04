@@ -1,14 +1,17 @@
 <script lang="ts" setup>
 import { useModalStore } from '@/stores/modal';
-import { Ref, ref } from 'vue';
+import { Ref, nextTick, ref, watch } from 'vue';
+import { disableBodyScroll, enableBodyScroll } from 'body-scroll-lock';
 
 // Inject
 const { modalImage, deleteImg, downloadImg, shareImg } = useModalStore();
 
 // Reactive
+const selfRef: Ref<Element | null> = ref(null);
 const imgRef: Ref<HTMLImageElement | null> = ref(null);
 const scale: Ref<number> = ref(1);
 const showInfo: Ref<boolean> = ref(false);
+const infoRef: Ref<Element | null> = ref(null);
 
 // Non-reactive
 let target: HTMLImageElement | null = null;
@@ -16,21 +19,15 @@ let offsetX: number = 0;
 let offsetY: number = 0;
 
 // Actions
-function noScroll(ev: WheelEvent | TouchEvent): void {
-  let el: HTMLElement | null = ev.target as HTMLElement;
-  while (el !== null) {
-    if (el.hasAttribute('use-scroll')) {
-      return;
-    }
-    el = el.parentElement;
+function wheelHandler(ev: WheelEvent): void {
+  if (showInfo.value) {
+    return;
   }
   ev.preventDefault();
-}
-function wheelHandler(ev: WheelEvent): void {
   if (ev.deltaY < 0) {
     scale.value += 0.1;
   } else {
-    scale.value -= 0.1;
+    scale.value = Math.max(0.1, scale.value - 0.1);
   }
 }
 
@@ -77,21 +74,33 @@ function touchEndHandler(): void {
 }
 
 function onEnter(): void {
-  document.addEventListener('wheel', wheelHandler);
-
-  const root: HTMLDivElement = document.querySelector('#app') as HTMLDivElement;
-  root.addEventListener('wheel', noScroll);
-  root.addEventListener('touchmove', noScroll);
+  disableBodyScroll(selfRef.value as Element, { reserveScrollBarGap: true });
 }
 function close(): void {
   modalImage.value = null;
   scale.value = 1;
-  document.removeEventListener('wheel', wheelHandler);
 
-  const root: HTMLDivElement = document.querySelector('#app') as HTMLDivElement;
-  root.removeEventListener('wheel', noScroll);
-  root.removeEventListener('touchmove', noScroll);
+  enableBodyScroll(selfRef.value as Element);
 }
+
+// Watch
+watch(
+  showInfo,
+  (value: boolean): void => {
+    if (value) {
+      nextTick().then((): void => {
+        disableBodyScroll(infoRef.value as Element, {
+          reserveScrollBarGap: true
+        });
+      });
+    } else {
+      disableBodyScroll(selfRef.value as Element, {
+        reserveScrollBarGap: true
+      });
+    }
+  },
+  { flush: 'pre' }
+);
 </script>
 
 <template>
@@ -99,17 +108,17 @@ function close(): void {
     <div
       v-if="modalImage"
       @click.self="close()"
-      class="backdrop-brightness-[20%] fixed flex gap-8 inset-0 items-center justify-center text-white z-20">
+      @wheel="wheelHandler"
+      class="wrapper"
+      ref="selfRef">
       <img
         @mousedown="mouseDownHandler"
         @touchstart="touchStartHandler"
-        class="absolute cursor-move max-h-[90vh] max-w-[90vw] select-none transition-transform"
         draggable="false"
         ref="imgRef"
         :src="'data:image/png;base64,' + modalImage.data"
         :style="{ transform: `scale(${scale})` }">
-      <div
-        class="absolute bg-black border border-neutral-500 bottom-4 flex gap-4 items-center p-4 rounded-lg shadow shadow-neutral-500 z-30">
+      <div class="tools">
         <button @click="close" title="返回">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -152,7 +161,7 @@ function close(): void {
               d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6"/>
           </svg>
         </button>
-        <button @click="scale -= 0.5" title="缩小">
+        <button @click="scale = Math.max(0.1, scale - 0.5)" title="缩小">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -166,7 +175,7 @@ function close(): void {
               d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM13.5 10.5h-6"/>
           </svg>
         </button>
-        <button @click="deleteImg" title="删除">
+        <button @click="deleteImg(undefined, close)" title="删除">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -213,20 +222,18 @@ function close(): void {
         <div
           v-if="showInfo"
           @click.self="showInfo = false"
-          class="backdrop-brightness-[20%] fixed flex gap-8 inset-0 items-center justify-center p-8 z-40">
-          <div
-            class="bg-black border border-neutral-500 flex flex-col gap-4 max-h-[90vh] overflow-y-auto p-4 rounded-lg shadow shadow-neutral-500 w-full z-30 md:w-2/3"
-            use-scroll>
+          class="info">
+          <div ref="infoRef">
             <section>
               <h1>正向提示词</h1>
-              <pre use-scroll>{{ modalImage.prompt }}</pre>
+              <pre>{{ modalImage.prompt }}</pre>
             </section>
             <section>
               <h1>负向提示词</h1>
-              <pre use-scroll>{{ modalImage.negative_prompt }}</pre>
+              <pre>{{ modalImage.negative_prompt }}</pre>
             </section>
-            <div class="flex flex-col gap-4 sm:flex-row">
-              <section class="w-full sm:w-1/2">
+            <div class="sub-w-1/2">
+              <section>
                 <h1>Diffusion 模型</h1>
                 <a
                   v-if="modalImage.ckpt_url"
@@ -236,45 +243,43 @@ function close(): void {
                 </a>
                 <p v-else>{{ modalImage.ckpt_name }}</p>
               </section>
-              <section class="w-full sm:w-1/2">
+              <section>
                 <h1>采样器</h1>
                 <p>{{ modalImage.sampler }}</p>
               </section>
             </div>
-            <div class="flex flex-col gap-4 sm:flex-row">
-              <section class="w-full sm:w-1/2">
+            <div class="sub-w-1/2">
+              <section>
                 <h1>采样迭代步数</h1>
                 <p>{{ modalImage.steps }}</p>
               </section>
-              <section class="w-full sm:w-1/2">
+              <section>
                 <h1>提示词相关性</h1>
                 <p>{{ modalImage.cfg_scale }}</p>
               </section>
             </div>
-            <div class="flex flex-col gap-4 sm:flex-row">
-              <section class="w-full sm:w-1/2">
+            <div class="sub-w-1/2">
+              <section>
                 <h1>随机种子</h1>
                 <p>{{ modalImage.seed }}</p>
               </section>
-              <section class="w-full sm:w-1/2">
+              <section>
                 <h1>图片尺寸（宽高比）</h1>
                 <p>
-                  {{ imgRef?.width }}x{{ imgRef?.height }} ({{ modalImage.ratio }})
+                  {{ imgRef?.naturalWidth }}x{{ imgRef?.naturalHeight }} ({{ modalImage.ratio }})
                 </p>
               </section>
             </div>
-            <div
-              v-if="modalImage.enable_hr"
-              class="flex flex-col gap-4 sm:flex-row">
-              <section class="w-full sm:w-1/3">
+            <div v-if="modalImage.enable_hr" class="wub-w-1/3">
+              <section>
                 <h1>放大倍数</h1>
                 <p>{{ modalImage.scale }}</p>
               </section>
-              <section class="w-full sm:w-1/3">
+              <section>
                 <h1>重设迭代步数</h1>
                 <p>{{ modalImage.hr_second_pass_steps }}</p>
               </section>
-              <section class="w-full sm:w-1/3">
+              <section>
                 <h1>重绘幅度</h1>
                 <p>{{ modalImage.denoising_strength }}</p>
               </section>
@@ -297,27 +302,120 @@ function close(): void {
   @apply opacity-0
 }
 
+img {
+  @apply
+    absolute
+    cursor-move
+    max-h-[90vh] max-w-[90vw]
+    select-none
+    transition-transform
+}
+
 section {
   @apply flex flex-col gap-2
 }
 
 section > h1 {
-  @apply font-bold text-lg
+  @apply
+    font-bold
+    text-lg
 }
 
 section > pre {
-  @apply bg-neutral-800 h-[10vh] overflow-y-auto p-2 rounded-lg text-wrap
+  @apply
+    bg-neutral-800
+    h-[10vh]
+    overflow-y-auto
+    p-2
+    rounded-lg
+    text-wrap
 }
 
 section > a {
-  @apply bg-neutral-800 p-2 rounded-lg text-wrap hover:text-red-500
+  @apply
+    bg-neutral-800
+    p-2
+    rounded-lg
+    text-wrap
+    hover:text-red-500
 }
+
 section > a::after {
   color: rgb(59, 130, 246);
   content: ' ↗';
 }
 
 section > p {
-  @apply bg-neutral-800 p-2 rounded-lg text-wrap
+  @apply
+    bg-neutral-800
+    p-2
+    rounded-lg
+    text-wrap
+}
+
+.wrapper {
+  @apply
+    backdrop-brightness-[20%]
+    fixed
+    flex gap-8 items-center justify-center
+    inset-0
+    text-white
+    z-20
+}
+
+.tools {
+  @apply
+    absolute
+    bg-black
+    border border-neutral-500
+    bottom-4
+    flex gap-4 items-center
+    p-4
+    rounded-lg
+    shadow shadow-neutral-500
+    z-30
+}
+
+.info {
+  @apply
+    backdrop-brightness-[20%]
+    fixed
+    flex gap-8 items-center justify-center
+    inset-0
+    p-8
+    z-40
+}
+
+.info > div {
+  @apply
+    bg-black
+    border border-neutral-500
+    flex flex-col gap-4
+    max-h-[90vh]
+    overflow-y-auto
+    p-4
+    rounded-lg
+    shadow shadow-neutral-500
+    w-full
+    z-30
+    md:w-2/3
+}
+
+.info > div > div {
+  @apply
+    flex flex-col gap-4
+    sm:flex-row
+}
+
+.info > div > div.sub-w-1\/2 > section {
+  @apply
+    w-full
+    sm:w-1/2
+}
+
+.info > div > div.sub-w-1\/3 > section {
+  @apply
+    w-full
+    sm:w-1/3
 }
 </style>
