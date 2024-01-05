@@ -54,7 +54,7 @@ watch(shareImage, (value: Image | null): void => {
     <section class="sub-w-1/2">
       <div>
         <h1>Diffusion 模型</h1>
-        <p>{{ shareImage.ckpt_name }}</p>
+        <p>{{ shareImage.model_name }}</p>
       </div>
       <div>
         <h1>采样器</h1>
@@ -83,20 +83,28 @@ watch(shareImage, (value: Image | null): void => {
         </p>
       </div>
     </section>
-    <section v-if="shareImage.enable_hr" class="sub-w-1/3">
-      <div>
-        <h1>放大倍数</h1>
-        <p>{{ shareImage.scale }}</p>
+    <template v-if="shareImage.enable_hr" >
+      <div class="sub-w-1/2">
+        <section>
+          <h1>放大倍数</h1>
+          <p>{{ shareImage.hr_scale }}</p>
+        </section>
+        <section>
+          <h1>放大算法</h1>
+          <p>{{ shareImage.hr_upscaler }}</p>
+        </section>
       </div>
-      <div>
-        <h1>重设迭代步数</h1>
-        <p>{{ shareImage.hr_second_pass_steps }}</p>
+      <div class="sub-w-1/2">
+        <section>
+          <h1>重设迭代步数</h1>
+          <p>{{ shareImage.hr_second_pass_steps }}</p>
+        </section>
+        <section>
+          <h1>重绘幅度</h1>
+          <p>{{ shareImage.denoising_strength }}</p>
+        </section>
       </div>
-      <div>
-        <h1>重绘幅度</h1>
-        <p>{{ shareImage.denoising_strength }}</p>
-      </div>
-    </section>
+    </template>
   </div>
 </template>
 

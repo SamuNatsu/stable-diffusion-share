@@ -1,25 +1,26 @@
 /// Database module
-import Dexie from 'dexie';
+import Dexie, { Transaction } from 'dexie';
 
 // Image interface
 export interface Image {
   id?: number;
-  ckpt_name: string;
-  ckpt_url: string | null;
-  basic_size: number;
-  sampler: string;
-  upscaler: string;
-  scale: number;
   data: string;
+  model_name: string;
+  model_url: string | null;
   prompt: string;
   negative_prompt: string;
+  sampler: string;
   steps: number;
   cfg_scale: number;
+  basic_size: number;
+  hr_upscaler: string;
   seed: string;
   ratio: string;
   enable_hr: boolean;
   hr_second_pass_steps: number;
+  hr_scale: number;
   denoising_strength: number;
+  time: number;
 }
 
 // Database class
@@ -31,10 +32,25 @@ class ImageDexie extends Dexie {
   public constructor() {
     super('images');
 
-    this.version(1).stores({
-      images:
-        '++id, ckpt_name, ckpt_url, basic_size, sampler, upscaler, scale, data, prompt, negative_prompt, steps, cfg_scale, seed, ratio, enable_hr, hr_second_pass_steps, denoising_strendth'
-    });
+    this.version(2)
+      .stores({ images: '++id' })
+      .upgrade((trans: Transaction): Promise<number> => {
+        return trans
+          .table('images')
+          .toCollection()
+          .modify((obj: any): void => {
+            obj.model_name = obj.ckpt_name;
+            obj.model_url = obj.ckpt_url;
+            obj.hr_upscaler = obj.upscaler ?? '\u2002';
+            obj.hr_scle = obj.scale;
+            obj.time = 0;
+
+            delete obj.ckpt_name;
+            delete obj.ckpt_url;
+            delete obj.upscaler;
+            delete obj.scale;
+          });
+      });
   }
 }
 

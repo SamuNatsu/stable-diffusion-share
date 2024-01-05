@@ -15,7 +15,8 @@ export const useGenerateStore = createGlobalState(() => {
     prependNegativePrompt,
     sampler,
     basicSize,
-    allowHr
+    allowHr,
+    hrUpscaler
   } = useSystemStore();
 
   // States
@@ -107,8 +108,8 @@ export const useGenerateStore = createGlobalState(() => {
       seed: seed.value,
       ratio: ratio.value,
       enable_hr: enableHr.value,
-      hr_scale: hrScale.value,
       hr_second_pass_steps: hrSecondPassSteps.value,
+      hr_scale: hrScale.value,
       denoising_strength: denoisingStrength.value
     };
 
@@ -182,13 +183,14 @@ export const useGenerateStore = createGlobalState(() => {
       const data: Record<string, any> = JSON.parse(ev.data);
       const image: Image = {
         ...task,
+        data: data.images[0],
+        model_name: modelName.value,
+        model_url: modelUrl.value,
         seed: JSON.parse(data.info).seed,
-        ckpt_name: modelName.value,
-        ckpt_url: modelUrl.value,
-        basic_size: basicSize.value,
         sampler: sampler.value,
-        scale: hrScale.value,
-        data: data.images[0]
+        basic_size: basicSize.value,
+        hr_upscaler: hrUpscaler.value,
+        time: Date.now()
       } as Image;
       log(`随机种子：${image.seed}`);
 

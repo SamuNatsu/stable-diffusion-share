@@ -27,7 +27,7 @@ export const useModalStore = createGlobalState(() => {
     const id: number = img?.id || (modalImage.value?.id as number);
     db.images.delete(id).then((): void => {
       updateGallery().then((): void => {
-        if (lastImage.value === modalImage.value) {
+        if (lastImage.value !== null && lastImage.value === modalImage.value) {
           setError('图片已删除');
           log('用户手动删除了图片');
         }

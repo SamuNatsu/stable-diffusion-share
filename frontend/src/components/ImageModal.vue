@@ -236,12 +236,12 @@ watch(
               <section>
                 <h1>Diffusion 模型</h1>
                 <a
-                  v-if="modalImage.ckpt_url"
-                  :href="modalImage.ckpt_url"
+                  v-if="modalImage.model_url"
+                  :href="modalImage.model_url"
                   target="_blank">
-                  {{ modalImage.ckpt_name }}
+                  {{ modalImage.model_name }}
                 </a>
-                <p v-else>{{ modalImage.ckpt_name }}</p>
+                <p v-else>{{ modalImage.model_name }}</p>
               </section>
               <section>
                 <h1>采样器</h1>
@@ -270,20 +270,28 @@ watch(
                 </p>
               </section>
             </div>
-            <div v-if="modalImage.enable_hr" class="wub-w-1/3">
-              <section>
-                <h1>放大倍数</h1>
-                <p>{{ modalImage.scale }}</p>
-              </section>
-              <section>
-                <h1>重设迭代步数</h1>
-                <p>{{ modalImage.hr_second_pass_steps }}</p>
-              </section>
-              <section>
-                <h1>重绘幅度</h1>
-                <p>{{ modalImage.denoising_strength }}</p>
-              </section>
-            </div>
+            <template v-if="modalImage.enable_hr" >
+              <div class="sub-w-1/2">
+                <section>
+                  <h1>放大倍数</h1>
+                  <p>{{ modalImage.hr_scale }}</p>
+                </section>
+                <section>
+                  <h1>放大算法</h1>
+                  <p>{{ modalImage.hr_upscaler }}</p>
+                </section>
+              </div>
+              <div class="sub-w-1/2">
+                <section>
+                  <h1>重设迭代步数</h1>
+                  <p>{{ modalImage.hr_second_pass_steps }}</p>
+                </section>
+                <section>
+                  <h1>重绘幅度</h1>
+                  <p>{{ modalImage.denoising_strength }}</p>
+                </section>
+              </div>
+            </template>
           </div>
         </div>
       </Transition>
@@ -411,11 +419,5 @@ section > p {
   @apply
     w-full
     sm:w-1/2
-}
-
-.info > div > div.sub-w-1\/3 > section {
-  @apply
-    w-full
-    sm:w-1/3
 }
 </style>
