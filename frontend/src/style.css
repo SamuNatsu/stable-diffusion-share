@@ -18,8 +18,10 @@
 
 *::-webkit-scrollbar-track {
   @apply
-    bg-neutral-800
+    bg-white
     rounded
+    transition-colors
+    dark:bg-neutral-800
 }
 
 body {

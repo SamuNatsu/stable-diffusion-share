@@ -42,7 +42,7 @@ class ImageDexie extends Dexie {
             obj.model_name = obj.ckpt_name;
             obj.model_url = obj.ckpt_url;
             obj.hr_upscaler = obj.upscaler ?? '\u2002';
-            obj.hr_scle = obj.scale;
+            obj.hr_scale = obj.scale;
             obj.time = 0;
 
             delete obj.ckpt_name;

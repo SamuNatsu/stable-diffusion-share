@@ -84,26 +84,26 @@ watch(shareImage, (value: Image | null): void => {
       </div>
     </section>
     <template v-if="shareImage.enable_hr" >
-      <div class="sub-w-1/2">
-        <section>
+      <section class="sub-w-1/2">
+        <div>
           <h1>放大倍数</h1>
           <p>{{ shareImage.hr_scale }}</p>
-        </section>
-        <section>
+        </div>
+        <div>
           <h1>放大算法</h1>
           <p>{{ shareImage.hr_upscaler }}</p>
-        </section>
-      </div>
-      <div class="sub-w-1/2">
-        <section>
+        </div>
+      </section>
+      <section class="sub-w-1/2">
+        <div>
           <h1>重设迭代步数</h1>
           <p>{{ shareImage.hr_second_pass_steps }}</p>
-        </section>
-        <section>
+        </div>
+        <div>
           <h1>重绘幅度</h1>
           <p>{{ shareImage.denoising_strength }}</p>
-        </section>
-      </div>
+        </div>
+      </section>
     </template>
   </div>
 </template>
@@ -130,9 +130,5 @@ section {
 
 .sub-w-1\/2 > div {
   @apply w-[calc(50%-0.5rem)]
-}
-
-.sub-w-1\/3 > div {
-  @apply w-[calc(100%/3-2rem/3)]
 }
 </style>
